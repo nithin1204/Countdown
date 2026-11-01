@@ -4,6 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Countdown Timer</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23193c72'/%3E%3Cpath d='M57 30.5a3 3 0 0 0-3-3H37L26 8.5a3 3 0 0 0-2.7-1.6h-3l5.5 20.6H12l-5-5.5H4l2.8 8-2.8 8h3l5-5.5h13.8l-5.5 20.6h3a3 3 0 0 0 2.7-1.6L37 33.5h17a3 3 0 0 0 3-3z' fill='white'/%3E%3C/svg%3E"
+    />
     <style>
       @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Pacifico&display=swap");
       * {
@@ -310,7 +315,7 @@
     </div>
     <script>
       const p = new URLSearchParams(location.search),
-        fallback = "2026-11-04T23:00";
+        fallback = "2026-11-04T22:00";
       let target = p.get("date") || fallback,
         title = p.get("title") || "Thailand Trip ✈",
         end = new Date(target);
