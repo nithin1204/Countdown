@@ -64,6 +64,14 @@
           radial-gradient(circle at 91% 33%, #fff 0 1px, transparent 2px),
           radial-gradient(circle at 17% 39%, #fff 0 1px, transparent 2px);
       }
+      .fireworks {
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
       header {
         display: flex;
         justify-content: space-between;
@@ -298,6 +306,7 @@
         </section>
       </main>
       <footer>GOOD THINGS TAKE TIME ♡</footer>
+      <canvas class="fireworks" id="fireworks" aria-hidden="true"></canvas>
     </div>
     <script>
       const p = new URLSearchParams(location.search),
@@ -308,6 +317,108 @@
       if (isNaN(end)) end = new Date(fallback);
       const $ = (id) => document.getElementById(id);
       $("title").textContent = title;
+      const fireworksCanvas = $("fireworks"),
+        fireworksContext = fireworksCanvas.getContext("2d"),
+        reducedMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+      let countdownFinished = false;
+
+      function startFireworks() {
+        if (!fireworksContext) return;
+
+        const scale = Math.min(window.devicePixelRatio || 1, 2),
+          duration = reducedMotion ? 1800 : 7000,
+          burstInterval = reducedMotion ? 900 : 520,
+          particleCount = reducedMotion ? 22 : 52,
+          colors = ["#fff3a6", "#ffadad", "#a6f7ff", "#ffffff"];
+        let particles = [],
+          startedAt = performance.now(),
+          lastBurst = 0;
+
+        function resizeCanvas() {
+          fireworksCanvas.width = Math.floor(window.innerWidth * scale);
+          fireworksCanvas.height = Math.floor(window.innerHeight * scale);
+          fireworksContext.setTransform(scale, 0, 0, scale, 0, 0);
+        }
+
+        function burst() {
+          const x = window.innerWidth * (0.12 + Math.random() * 0.76),
+            y = window.innerHeight * (0.12 + Math.random() * 0.42);
+
+          for (let i = 0; i < particleCount; i++) {
+            const angle = (Math.PI * 2 * i) / particleCount,
+              speed = 1.2 + Math.random() * 3.8;
+            particles.push({
+              x,
+              y,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed,
+              life: 45 + Math.random() * 30,
+              maxLife: 75,
+              color: colors[Math.floor(Math.random() * colors.length)],
+            });
+          }
+        }
+
+        function animate(now) {
+          const elapsed = now - startedAt;
+          fireworksContext.clearRect(
+            0,
+            0,
+            window.innerWidth,
+            window.innerHeight,
+          );
+          if (elapsed - lastBurst >= burstInterval && elapsed < duration) {
+            burst();
+            lastBurst = elapsed;
+          }
+
+          for (let i = particles.length - 1; i >= 0; i--) {
+            const particle = particles[i];
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            particle.vy += 0.035;
+            particle.vx *= 0.99;
+            particle.life--;
+
+            if (particle.life <= 0) {
+              particles.splice(i, 1);
+              continue;
+            }
+
+            fireworksContext.globalAlpha = particle.life / particle.maxLife;
+            fireworksContext.strokeStyle = particle.color;
+            fireworksContext.lineWidth = 2;
+            fireworksContext.beginPath();
+            fireworksContext.moveTo(
+              particle.x - particle.vx * 2,
+              particle.y - particle.vy * 2,
+            );
+            fireworksContext.lineTo(particle.x, particle.y);
+            fireworksContext.stroke();
+          }
+
+          fireworksContext.globalAlpha = 1;
+          if (elapsed < duration || particles.length > 0) {
+            requestAnimationFrame(animate);
+          } else {
+            fireworksContext.clearRect(
+              0,
+              0,
+              window.innerWidth,
+              window.innerHeight,
+            );
+            window.removeEventListener("resize", resizeCanvas);
+          }
+        }
+
+        resizeCanvas();
+        window.addEventListener("resize", resizeCanvas);
+        burst();
+        requestAnimationFrame(animate);
+      }
+
       function update() {
         let x = Math.max(0, end - Date.now()),
           t = Math.floor(x / 1000),
@@ -330,6 +441,13 @@
           day: "numeric",
           year: "numeric",
         });
+        if (x === 0 && !countdownFinished) {
+          countdownFinished = true;
+          document.querySelector(".kicker").textContent =
+            "THE COUNTDOWN IS OVER!";
+          clearInterval(countdownInterval);
+          startFireworks();
+        }
       }
       function share() {
         const u = new URL(location.href);
@@ -355,8 +473,8 @@
             .catch(() => prompt("Copy this countdown URL:", u.href));
       }
       $("shareBtn").onclick = share;
+      const countdownInterval = setInterval(update, 1000);
       update();
-      setInterval(update, 1000);
     </script>
   </body>
 </html>
